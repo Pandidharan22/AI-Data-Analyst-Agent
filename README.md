@@ -44,7 +44,7 @@ An open-source toolkit that combines automated data cleaning, AI-generated insig
 ---
 
 ### Upcoming Features
-- GenAI-powered cleaning suggestions (Gemini API)
+- GenAI-powered cleaning suggestions (Ollama LLM)
 - Interactive approval/modification of cleaning steps
 - Export cleaning steps as Python scripts
 - Automated EDA and visualization
@@ -54,16 +54,22 @@ An open-source toolkit that combines automated data cleaning, AI-generated insig
 
 ---
 
+## Ollama Integration (Coming Soon)
+
+This project will use a local Ollama LLM for GenAI-powered data cleaning suggestions and narratives. Ensure you have Ollama installed and running on your machine. See [Ollama's official site](https://ollama.com/) for setup instructions. No cloud API keys required—your data stays local!
+
+---
+
 ## Quickstart
 
 1. Start the FastAPI backend:
-	```
-	C:/Python313/python.exe -m uvicorn src.api.main:app --reload
-	```
+  ```
+  C:/Python313/python.exe -m uvicorn src.api.main:app --reload
+  ```
 2. Start the Gradio frontend:
-	```
-	C:/Python313/python.exe gradio_app.py
-	```
+  ```
+  C:/Python313/python.exe gradio_app.py
+  ```
 3. Open the Gradio UI in your browser and upload a CSV to analyze data issues.
 
 ---

@@ -1,8 +1,10 @@
 
+
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
 from src.cleaning.detector import analyze_issues
+
 
 app = FastAPI()
 
@@ -26,3 +28,6 @@ async def analyze_csv(file: UploadFile = File(...)):
     df = pd.read_csv(file.file)
     issues = analyze_issues(df)
     return {"issues": issues, "columns": list(df.columns)}
+
+
+
