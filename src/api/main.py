@@ -6,9 +6,10 @@ from src.storytelling.hf_client import (
     get_cleaning_suggestions_hf,
     get_data_story_hf,
     get_visualization_suggestion_hf,
+    get_chat_response_hf,
 )
 
-app = FastAPI()
+app = FastAPI(title="AI Data Analyst Agent")
 
 # Allow CORS for local Gradio UI
 app.add_middleware(
@@ -36,8 +37,8 @@ async def suggest_cleaning(
     issues: dict = Body(...),
     columns: list = Body(...)
 ):
-    suggestions = get_cleaning_suggestions_hf(issues, columns)
-    return {"suggestions": suggestions}
+    suggestions_md = get_cleaning_suggestions_hf(issues, columns)
+    return {"suggestions": suggestions_md}
 
 @app.post("/generate-story")
 async def generate_story(
@@ -61,4 +62,17 @@ async def suggest_visualization(
     """
     code = get_visualization_suggestion_hf(columns, df_head)
     return {"visualization_code": code}
+
+@app.post("/chat")
+async def chat(
+    message: str = Body(...),
+    history: list = Body(...),
+    columns: list = Body(...),
+    df_head: str = Body(...)
+):
+    """
+    Handles chatbot conversation.
+    """
+    response = get_chat_response_hf(message, history, columns, df_head)
+    return {"response": response}
 

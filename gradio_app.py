@@ -1,4 +1,5 @@
 API_SUGGEST_URL = "http://127.0.0.1:8000/suggest-cleaning"
+API_CHAT_URL = "http://127.0.0.1:8000/chat"
 def analyze_csv(file):
     if file is None:
         return "No file uploaded.", None, None, None, None
@@ -37,11 +38,9 @@ def get_ai_suggestions(issues_str, columns_str):
         with httpx.Client(timeout=None) as client:
             resp = client.post(API_SUGGEST_URL, json={"issues": issues, "columns": columns})
         if resp.status_code == 200:
-            suggestions = resp.json().get("suggestions", [])
-            # Join suggestions into a single wrapped block of text (no markdown code blocks)
-            if isinstance(suggestions, list):
-                return "\n\n".join(suggestions)
-            return str(suggestions)
+            # Backend now returns a single Markdown string
+            suggestions_md = resp.json().get("suggestions", "")
+            return suggestions_md or "No suggestions generated."
         else:
             return f"API error: {resp.status_code}"
     except Exception as e:
@@ -70,12 +69,16 @@ def check_api():
 
 if __name__ == "__main__":
     # Force wrapping and remove horizontal scrolling for suggestions
-    css = ".sugg { white-space: pre-wrap; word-break: break-word; overflow-x: hidden; }"
-    with gr.Blocks(css=css) as demo:
+    css = """
+    .sugg { white-space: pre-wrap; word-break: break-word; overflow-x: hidden; }
+    .scroll-story { height: 24rem; overflow-y: auto; padding: 1rem; border: 1px solid #E5E7EB; border-radius: 4px; }
+    .scroll-suggestions { height: 24rem; overflow-y: auto; padding: 1rem; border: 1px solid #E5E7EB; border-radius: 4px; }
+    """
+    with gr.Blocks(css=css, title="AI Data Analyst Agent") as demo:
         # Add a hidden state component to store the uploaded file path
         filepath_state = gr.Textbox(visible=False)
         
-        gr.Markdown("# AI Data Storyteller & Cleaner\nUpload a CSV to detect data issues and get AI-powered cleaning suggestions.")
+        gr.Markdown("# AI Data Analyst Agent\nUpload a CSV to detect issues, get AI cleaning code, generate stories, visualizations, and chat with an analyst.")
         with gr.Row():
             file_input = gr.File(label="Upload CSV", file_types=[".csv"])
             analyze_btn = gr.Button("Analyze Data Issues")
@@ -92,14 +95,14 @@ if __name__ == "__main__":
 
         with gr.Row():
             suggest_btn = gr.Button("Get AI Cleaning Suggestions (Meta Llama 3)")
-        # Use a multiline Textbox to avoid horizontal scrolling and keep code readable
-        suggestions_out = gr.Textbox(label="AI Cleaning Suggestions", lines=28, show_copy_button=True, elem_classes=["sugg"], interactive=False)
+        # Render markdown with scrollable container for better readability
+        suggestions_out = gr.Markdown(label="AI Cleaning Suggestions", elem_classes=["scroll-suggestions"])
         suggest_btn.click(fn=get_ai_suggestions, inputs=[issues_hidden, columns_hidden], outputs=suggestions_out, show_progress=True)
 
         gr.Markdown("---")
         gr.Markdown("## AI Data Storytelling")
         story_btn = gr.Button("Generate Data Story")
-        story_out = gr.Markdown(label="Data Story")
+        story_out = gr.Markdown(label="Data Story", elem_classes=["scroll-story"])
 
         def get_ai_story(filepath, columns_str):
             if not filepath:
@@ -207,4 +210,52 @@ if __name__ == "__main__":
         btn = gr.Button("Check API Status")
         out = gr.Textbox(label="API Response")
         btn.click(fn=check_api, outputs=out)
+
+        gr.Markdown("---")
+        gr.Markdown("## Data Analyst Chatbot")
+        chatbot = gr.Chatbot(label="Chat with your Data Analyst")
+        msg = gr.Textbox(label="Ask a question about your data...")
+        clear = gr.Button("Clear Chat")
+
+        def user_chat(user_message, history):
+            return "", history + [[user_message, None]]
+
+        def bot_response(history, filepath, columns_str):
+            if not filepath:
+                history[-1][1] = "Please upload and analyze a file before starting a chat."
+                return history
+
+            user_message = history[-1][0]
+            
+            try:
+                df = pd.read_csv(filepath)
+                df_head = df.head().to_string()
+                columns = ast.literal_eval(columns_str)
+
+                with httpx.Client(timeout=None) as client:
+                    resp = client.post(
+                        API_CHAT_URL,
+                        json={
+                            "message": user_message,
+                            "history": history[:-1], # Send history without the current question
+                            "columns": columns,
+                            "df_head": df_head,
+                        }
+                    )
+                
+                if resp.status_code == 200:
+                    bot_message = resp.json().get("response", "Sorry, I didn't get a response.")
+                else:
+                    bot_message = f"API Error: {resp.status_code}"
+
+            except Exception as e:
+                bot_message = f"An error occurred: {e}"
+
+            history[-1][1] = bot_message
+            return history
+
+        msg.submit(user_chat, [msg, chatbot], [msg, chatbot], queue=False).then(
+            bot_response, [chatbot, filepath_state, columns_hidden], chatbot
+        )
+        clear.click(lambda: None, None, chatbot, queue=False)
     demo.launch()
