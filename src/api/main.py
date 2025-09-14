@@ -1,10 +1,8 @@
-
-
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, Body
 from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
 from src.cleaning.detector import analyze_issues
-
+from src.storytelling.hf_client import get_cleaning_suggestions_hf
 
 app = FastAPI()
 
@@ -21,7 +19,6 @@ app.add_middleware(
 def ping():
     return {"message": "API is running"}
 
-
 # Data cleaning: upload and analyze CSV
 @app.post("/analyze-csv")
 async def analyze_csv(file: UploadFile = File(...)):
@@ -29,5 +26,25 @@ async def analyze_csv(file: UploadFile = File(...)):
     issues = analyze_issues(df)
     return {"issues": issues, "columns": list(df.columns)}
 
+# Hugging Face-powered cleaning suggestions
+@app.post("/suggest-cleaning")
+async def suggest_cleaning(
+    issues: dict = Body(...),
+    columns: list = Body(...)
+):
+    suggestions = get_cleaning_suggestions_hf(issues, columns)
+    return {"suggestions": suggestions}
 
+@app.post("/generate-story")
+async def generate_story(
+    df_head: str = Body(...),
+    df_describe: str = Body(...),
+    columns: list = Body(...)
+):
+    """
+    Receives dataframe summaries and generates a data story.
+    """
+    from src.storytelling.hf_client import get_data_story_hf
+    story = get_data_story_hf(df_head, df_describe, columns)
+    return {"story": story}
 
