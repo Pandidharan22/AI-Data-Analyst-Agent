@@ -2,7 +2,11 @@ from fastapi import FastAPI, UploadFile, File, Body
 from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
 from src.cleaning.detector import analyze_issues
-from src.storytelling.hf_client import get_cleaning_suggestions_hf
+from src.storytelling.hf_client import (
+    get_cleaning_suggestions_hf,
+    get_data_story_hf,
+    get_visualization_suggestion_hf,
+)
 
 app = FastAPI()
 
@@ -44,7 +48,17 @@ async def generate_story(
     """
     Receives dataframe summaries and generates a data story.
     """
-    from src.storytelling.hf_client import get_data_story_hf
     story = get_data_story_hf(df_head, df_describe, columns)
     return {"story": story}
+
+@app.post("/suggest-visualization")
+async def suggest_visualization(
+    columns: list = Body(...),
+    df_head: str = Body(...)
+):
+    """
+    Receives dataframe info and generates a visualization suggestion.
+    """
+    code = get_visualization_suggestion_hf(columns, df_head)
+    return {"visualization_code": code}
 

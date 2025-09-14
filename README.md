@@ -1,6 +1,65 @@
 # AI-Powered Data Storyteller & Cleaner
 
-An open-source toolkit that combines automated data cleaning, AI-generated insights, and storytelling for data science workflows. Built with Python, FastAPI, and Gradio, this project aims to accelerate and simplify the process of preparing, analyzing, and presenting data.
+# AI Data Storyteller & Cleaner
+
+This project is an interactive, AI-powered toolkit for automated data cleaning, analysis, and storytelling. Built with Python, FastAPI, and Gradio, it allows users to upload a CSV file and receive intelligent data quality assessments, cleaning suggestions, and narrative summaries.
+
+## Features
+
+- **Automated Data Issue Detection:** Upload a CSV and instantly get a report on common data quality issues like:
+  - Missing Values
+  - Duplicate Rows
+  - Outliers
+  - Data Type Inconsistencies
+- **AI-Powered Cleaning Suggestions:** Leveraging the power of Meta's Llama 3 model, the tool provides concrete, actionable Python code snippets to fix the detected issues.
+- **AI Data Storytelling:** Generates a high-level narrative summary of the dataset, explaining key insights, trends, and patterns in plain English.
+- **AI Visualization Suggestions:** Recommends and generates relevant data visualizations (e.g., histograms, scatter plots) complete with the Python code to create them.
+- **Interactive UI:** A simple, user-friendly web interface built with Gradio allows for easy file uploads and interaction.
+- **FastAPI Backend:** A robust backend powered by FastAPI handles all the data processing and AI interactions.
+
+## Tech Stack
+
+- **Backend:** FastAPI, Uvicorn
+- **Frontend:** Gradio
+- **Data Handling:** Pandas, NumPy
+- **AI/LLM:** Hugging Face InferenceClient (running Meta Llama 3)
+- **Plotting:** Matplotlib, Seaborn
+
+## Setup and Installation
+
+1.  **Clone the repository:**
+    ```bash
+    git clone <your-repo-url>
+    cd ai-data-storyteller
+    ```
+
+2.  **Create a virtual environment and install dependencies:**
+    ```bash
+    python -m venv venv
+    source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
+    pip install -r requirements.txt
+    ```
+
+3.  **Set up your Hugging Face API Token:**
+    - Create a `.env` file in the root of the project.
+    - Add your Hugging Face token to the file:
+      ```
+      HF_TOKEN="your_hugging_face_api_token_here"
+      ```
+
+4.  **Run the application:**
+    - Start the FastAPI backend:
+      ```bash
+      uvicorn src.api.main:app --reload
+      ```
+    - In a separate terminal, run the Gradio frontend:
+      ```bash
+      python gradio_app.py
+      ```
+
+5.  **Open the application:**
+    - Navigate to the local URL provided by Gradio (usually `http://127.0.0.1:7860`) in your web browser.
+
 
 ## Project Overview
 

@@ -130,6 +130,79 @@ if __name__ == "__main__":
         story_btn.click(fn=get_ai_story, inputs=[filepath_state, columns_hidden], outputs=story_out, show_progress=True)
 
         gr.Markdown("---")
+        gr.Markdown("## AI Visualization Suggestion")
+        with gr.Row():
+            viz_btn = gr.Button("Suggest a Visualization")
+        with gr.Row():
+            viz_plot = gr.Plot(label="Suggested Visualization")
+            viz_code = gr.Code(label="Visualization Code", language="python")
+
+        def get_ai_visualization(filepath, columns_str):
+            if not filepath:
+                return None, "Please analyze a file first."
+            
+            try:
+                # Read dataframe to get head
+                df = pd.read_csv(filepath)
+                df_head = df.head().to_string()
+                columns = ast.literal_eval(columns_str)
+
+                # Call the new backend endpoint
+                with httpx.Client(timeout=None) as client:
+                    resp = client.post(
+                        "http://127.0.0.1:8000/suggest-visualization",
+                        json={"columns": columns, "df_head": df_head}
+                    )
+                
+                if resp.status_code == 200:
+                    code = resp.json().get("visualization_code")
+                    
+                    # Execute the code to generate the plot
+                    # The code should define a 'fig' variable or just show the plot
+                    # We need to capture the plot object. A simple way is to exec
+                    # and assume it creates a figure.
+                    
+                    # Create a space for the code to execute in
+                    local_scope = {}
+                    # The code expects a dataframe 'df'
+                    local_scope['df'] = df
+                    
+                    # Redirect stdout to capture any prints if needed
+                    from io import StringIO
+                    import sys
+                    old_stdout = sys.stdout
+                    sys.stdout = captured_output = StringIO()
+                    
+                    exec(code, globals(), local_scope)
+                    
+                    sys.stdout = old_stdout # Restore stdout
+                    
+                    # Gradio's gr.Plot can take a matplotlib figure object
+                    # We assume the executed code creates a figure on plt
+                    import matplotlib.pyplot as plt
+                    fig = plt.gcf()
+                    
+                    # If the figure is empty, it might be a seaborn plot that needs drawing
+                    if not fig.axes:
+                        # This is a bit of a hack, but seaborn plots often just need plt.show()
+                        # to be drawn onto the current figure.
+                        plt.tight_layout()
+
+                    return fig, code
+                else:
+                    return None, f"API error: {resp.status_code}"
+
+            except Exception as e:
+                return None, f"Error generating visualization: {e}"
+
+        viz_btn.click(
+            fn=get_ai_visualization,
+            inputs=[filepath_state, columns_hidden],
+            outputs=[viz_plot, viz_code],
+            show_progress=True
+        )
+
+        gr.Markdown("---")
         gr.Markdown("## Backend Connectivity Test")
         btn = gr.Button("Check API Status")
         out = gr.Textbox(label="API Response")

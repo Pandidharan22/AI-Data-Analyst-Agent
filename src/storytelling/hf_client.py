@@ -174,3 +174,50 @@ def get_data_story_hf(df_head: str, df_describe: str, columns: list, model_name=
     except Exception as e:
         print(f"An error occurred in get_data_story_hf: {e}")
         return "Error: Could not generate the data story. Please check the logs."
+
+def get_visualization_suggestion_hf(columns: list, df_head: str, model_name="meta-llama/Meta-Llama-3-8B-Instruct"):
+    """
+    Generates a data visualization suggestion using a Hugging Face model.
+    """
+    try:
+        hf_token = get_hf_token()
+        client = InferenceClient(provider="novita", api_key=hf_token)
+
+        system_prompt = (
+            "You are a data visualization expert. Your task is to suggest a relevant and insightful "
+            "data visualization based on the provided dataset columns and head. "
+            "Your output must be a single, clean block of executable Python code using seaborn or matplotlib. "
+            "The code should be complete and ready to run, assuming a pandas DataFrame named `df` already exists. "
+            "It must include all necessary imports. "
+            "Do not add any explanation, narrative, or markdown fences. Do NOT include `pd.read_csv()`. Just the plotting code."
+        )
+
+        user_prompt = (
+            "Based on the following dataset information, please provide the Python code for a single, meaningful visualization. "
+            "Assume the data is already loaded into a pandas DataFrame called `df`.\n\n"
+            f"Columns: {columns}\n\n"
+            f"First 5 rows:\n{df_head}\n\n"
+            "Provide only the runnable Python code for the plot. Do not include `pd.read_csv()`."
+        )
+
+        completion = client.chat.completions.create(
+            model=model_name,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            max_tokens=500,
+            temperature=0.2,
+        )
+        
+        code = completion.choices[0].message.content.strip()
+        
+        # Clean the output to ensure it's just code
+        code = re.sub(r"```python", "", code)
+        code = re.sub(r"```", "", code)
+        
+        return code.strip()
+
+    except Exception as e:
+        print(f"An error occurred in get_visualization_suggestion_hf: {e}")
+        return "import matplotlib.pyplot as plt\nimport seaborn as sns\n\n# Error generating suggestion. Please check logs.\nplt.figure()\nplt.title('Error Generating Plot')\nplt.show()"
