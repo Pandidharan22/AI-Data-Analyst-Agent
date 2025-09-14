@@ -51,20 +51,7 @@ import httpx
 import pandas as pd
 import ast
 
-API_PING_URL = "http://127.0.0.1:8000/ping"
 API_ANALYZE_URL = "http://127.0.0.1:8000/analyze-csv"
-
-
-def check_api():
-    try:
-        with httpx.Client(timeout=None) as client:
-            resp = client.get(API_PING_URL)
-        if resp.status_code == 200:
-            return resp.json()["message"]
-        else:
-            return f"API error: {resp.status_code}"
-    except Exception as e:
-        return f"Connection failed: {e}"
 
 
 if __name__ == "__main__":
@@ -204,12 +191,6 @@ if __name__ == "__main__":
             outputs=[viz_plot, viz_code],
             show_progress=True
         )
-
-        gr.Markdown("---")
-        gr.Markdown("## Backend Connectivity Test")
-        btn = gr.Button("Check API Status")
-        out = gr.Textbox(label="API Response")
-        btn.click(fn=check_api, outputs=out)
 
         gr.Markdown("---")
         gr.Markdown("## Data Analyst Chatbot")
