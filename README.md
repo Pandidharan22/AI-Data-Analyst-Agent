@@ -1,5 +1,20 @@
 # AI Data Analyst Agent
 
+[![Live Demo on Hugging Face Spaces](https://img.shields.io/badge/Live%20Demo-Hugging%20Face%20Spaces-blue?logo=huggingface)](https://huggingface.co/spaces/Pandidharan22/AI-Data-Analyst-Agent)
+
+---
+title: AI Data Analyst Agent
+emoji: 📊
+colorFrom: indigo
+colorTo: purple
+sdk: gradio
+sdk_version: "4.29.0"
+app_file: gradio_app.py
+pinned: false
+---
+
+# AI Data Analyst Agent
+
 Converse with your dataset. Upload a CSV, detect data issues, get a Markdown cleaning playbook with runnable code, generate a narrative data story, request visualizations (auto-rendered), and chat with a context-aware data analyst bot.
 
 Built with FastAPI + Gradio, powered by a Hugging Face LLM.
